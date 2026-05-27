@@ -1,0 +1,18 @@
+name: CI
+"on":
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install numpy pytest
+      - run: python -c "from graph.graph_store import PropertyGraph, Node, Edge; g=PropertyGraph(); g.add_node(Node('Alice','PERSON')); g.add_node(Node('Microsoft','ORG')); g.add_edge(Edge('Alice','WORKS_AT','Microsoft')); n=g.neighbors('alice',1); assert len(n)>=1; print(f'graph OK: {g.stats}')"
+      - run: python -c "from graph.traversal import extract_entities_from_query, get_graph_context; from graph.graph_store import PropertyGraph, Node; g=PropertyGraph(); g.add_node(Node('microsoft','ORG')); e=extract_entities_from_query('tell me about microsoft',g); assert 'microsoft' in e; print('traversal OK')"
+      - run: python run.py
