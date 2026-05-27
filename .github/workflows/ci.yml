@@ -9,5 +9,29 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install numpy pytest
-      - run: python -c "from graph.graph_store import PropertyGraph, Node, Edge; g=PropertyGraph(); g.add_node(Node('Alice','PERSON')); g.add_edge(Edge('Alice','WORKS_AT','Microsoft')); print(f'graph OK: {g.stats}')"
+      - name: Test property graph
+        run: |
+          python - <<'PYEOF'
+          from graph.graph_store import PropertyGraph, Node, Edge
+          g = PropertyGraph()
+          g.add_node(Node('Alice', 'PERSON'))
+          g.add_node(Node('Microsoft', 'ORG'))
+          g.add_edge(Edge('Alice', 'WORKS_AT', 'Microsoft'))
+          assert g.stats['nodes'] == 2
+          assert g.stats['edges'] == 1
+          neighbors = g.neighbors('alice', depth=1)
+          assert len(neighbors) >= 1
+          print('graph OK:', g.stats)
+          PYEOF
+      - name: Test traversal
+        run: |
+          python - <<'PYEOF'
+          from graph.traversal import extract_entities_from_query
+          from graph.graph_store import PropertyGraph, Node
+          g = PropertyGraph()
+          g.add_node(Node('microsoft', 'ORG'))
+          entities = extract_entities_from_query('tell me about microsoft', g)
+          assert 'microsoft' in entities
+          print('traversal OK')
+          PYEOF
       - run: python run.py
